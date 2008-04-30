@@ -92,7 +92,7 @@ ul.bullets li { margin-left: 1em; }
             <p class="viewuser" id="me.username"></p>
           </a>
         </div>
-        <p><input type="submit" value="Lonely? Auto friend me!" onclick="befriendMe();"/></p>
+        <!--<p><input type="submit" value="Lonely? Auto friend me!" onclick="befriendMe();"/></p>-->
         <h2>Status:</h2>
         <p><span id="me.status.message"></span></p>
       </div>
@@ -140,8 +140,8 @@ ul.bullets li { margin-left: 1em; }
   <div class="wrapper" id="updater">
     <h1>Wassup?</h1>
     <div class="info">
-      <textarea cols="40" id="status" rows="2"></textarea>
-      <input onclick="updateStatus();" value="Send Message" type="button" onkeyup="dwr.util.onReturn(updateStatus);"/>
+      <textarea cols="40" id="status" rows="2" onkeyup="dwr.util.onReturn(event, updateStatus);"></textarea>
+      <input onclick="updateStatus();" value="Send Message" type="button"/>
     </div>
   </div>
   <br/>
