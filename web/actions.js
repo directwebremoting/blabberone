@@ -55,13 +55,17 @@ function toggleFollow() {
 
 function getLoadUserAction(user, mode) {
     return function() {
-        Network.getUser(user, function(data) {
-            dwr.engine.beginBatch();
-            displayUserInSidebar(data);
-            setModeInternal(mode);
-            dwr.engine.endBatch();
-        });
+        loadUser(user, mode);
     };
+}
+
+function loadUser(user, mode) {
+    Network.getUser(user, function(data) {
+        dwr.engine.beginBatch();
+        displayUserInSidebar(data);
+        setModeInternal(mode);
+        dwr.engine.endBatch();
+    });
 }
 
 function existingChanged() {
