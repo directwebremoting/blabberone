@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<project name="blabberone" default="all">
+
+  <!--=======================================================================-->
+  <property name="source.root" value="."/>
+  <property name="source.java" value="${source.root}/java"/>
+  <property name="source.jar" value="${source.root}/jar"/>
+  <property name="source.etc" value="${source.root}/etc"/>
+  <property name="source.web" value="${source.root}/web"/>
+
+  <property name="target.root" value="${source.root}/target/ant"/>
+  <property name="target.classes" value="${source.web}/WEB-INF/classes"/>
+
+  <!--=======================================================================-->
+  <patternset id="java.non.compile">
+    <include name="**/*.properties"/>
+    <include name="**/*.gif"/>
+    <include name="**/*.jpg"/>
+    <include name="**/*.png"/>
+    <include name="**/*.ser"/>
+  </patternset>
+  <property name="java.non.compile" value="**/*.properties,**/*.gif,**/*.jpg,**/*.png,**/*.ser"/>
+
+  <!--=======================================================================-->
+  <target name="prepare">
+    <echo message="Building on ${os.name}"/>
+    <tstamp/>
+  </target>
+
+  <!--=======================================================================-->
+  <target name="war" depends="prepare" description="Create a WAR directory">
+    <mkdir dir="${target.classes}"/>
+    <javac debug="on" includes="**/*.java" destdir="${target.classes}">
+      <src path="${source.java}"/>
+      <classpath>
+        <dirset dir="${target.classes}"/>
+        <fileset dir="${source.jar}" includes="**/*.jar"/>
+        <fileset dir="${source.web}/WEB-INF/lib" includes="**/*.jar"/>
+      </classpath>
+    </javac>
+    <copy todir="${target.classes}">
+      <fileset dir="${source.etc}/classpath"/>
+      <fileset dir="${source.java}/main">
+        <patternset refid="java.non.compile"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <!--=======================================================================-->
+  <target name="targetwar" depends="war" description="Copy war to target/ant/war-new">
+    <mkdir dir="${target.root}/war"/>
+    <mkdir dir="${target.root}/war-new"/>
+    <copy todir="${target.root}/war-new">
+      <fileset dir="${source.web}"/>
+    </copy>
+  </target>
+
+  <!--=======================================================================-->
+  <target name="live" depends="targetwar" description="Copy war-new to war">
+    <!-- we want these 2 commands to happen quickly so tomcat doesn't notice -->
+    <tstamp>
+      <format property="date" pattern="yyyy.MM.dd.HH.mm"/>
+    </tstamp>
+    <move file="${target.root}/war" tofile="${target.root}/war-${date}"/>
+    <move file="${target.root}/war-new" tofile="${target.root}/war"/>
+  </target>
+
+  <!--=======================================================================-->
+  <target name="all" depends="war">
+  </target>
+
+  <!--=======================================================================-->
+  <target name="clean" description="Wipe away the ./target">
+    <delete dir="${target.root}"/>
+  </target>
+
+</project>
