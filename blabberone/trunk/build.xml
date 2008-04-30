@@ -38,7 +38,7 @@
       </classpath>
     </javac>
     <copy todir="${target.classes}">
-      <fileset dir="${source.java}/main">
+      <fileset dir="${source.java}">
         <patternset refid="java.non.compile"/>
       </fileset>
     </copy>
