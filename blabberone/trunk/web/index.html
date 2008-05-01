@@ -42,10 +42,11 @@ ul.bullets li { margin-left: 1em; }
 
 #content .wrapper { background:#fff; padding:10px; margin-bottom:5px; border:1px solid #87bc44; -moz-border-radius:5px; -webkit-border-radius:5px; }
 #content ul { padding-left:0px; }
+#content div#error { background:#fdd; }
 
 #content h1 { color:#000; font-size: 1.5em; margin: 3px 0pt 4px; line-height: 1.9em; position: relative; padding: 0 10px; }
 
-#side_base { float:right; width:187px; margin-top:17px; line-height:1.2; }
+#side_base { float:right; width:187px; margin-top:58px; line-height:1.2; }
 #side { padding:12px 10px; margin-top:0px; margin-bottom:10px; border:1px solid #87bc44; background:#DDFFCC; -moz-border-radius:5px; -webkit-border-radius:5px; }
 #side div.user_icon img { float: left; padding-right: 0.5em; }
 #side div.section { margin-bottom: 2em; clear: both; }
@@ -73,7 +74,7 @@ ul.bullets li { margin-left: 1em; }
 
 .inputline { margin-bottom:10px; }
 
-#intro_close { font-size:80%; float:right; border:1px outset #999; background:#EEE; padding:1px 4px; }
+.close_button { font-size:80%; float:right; border:1px outset #999; background:#EEE; padding:1px 4px; }
 
 #tweet_template { display:none; }
 .message { padding:10px 0 10px 0; }
@@ -83,7 +84,6 @@ ul.bullets li { margin-left: 1em; }
 <body onload="init();">
 
 <div id="container">
-<img src="images/blabberone.png"/>
 
 <div id="side_base">
   <div id="side">
@@ -140,6 +140,8 @@ ul.bullets li { margin-left: 1em; }
   </div>
 </div>
 
+<img src="images/blabberone.png"/>
+
 <div id="content">
   <div class="wrapper" id="intro">
     <p><strong>BlabberOne is only a demonstration.</strong>
@@ -147,10 +149,15 @@ ul.bullets li { margin-left: 1em; }
     although clearly not affiliated with either. It's here for JavaOne,
     to be used in <a href="https://www28.cplan.com/cc191/session_details.jsp?isid=295661&ilocation_id=191-1&ilanguage=english">Alex/Joe's talk on Comet</a>,
     and <a href="https://www28.cplan.com/cc191/session_details.jsp?isid=295302&ilocation_id=191-1&ilanguage=english">Jeremiah/Joe's talk Web 2 Security</a>.
-    <span id="intro_close"><a href="#" onclick="dwr.util.byId('intro').style.display = 'none';">Close</a></span>
+    <span id="intro_close" class="close_button"><a href="#" onclick="dwr.util.byId('intro').style.display = 'none';">Close</a></span>
     Don't expect anything you enter here to have any significant lifetime.
     You can see the real tweet action for Joe <a href="http://twitter.com/joewalker">here</a>.
     </p>
+  </div>
+
+  <div class="wrapper" id="error" style="display:none;">
+    <span id="error_close" class="close_button"><a href="#" onclick="dwr.util.byId('error').style.display = 'none';">Close</a></span>
+    <p>A problem has occured. You may need to refresh the page: <span id="error_message"></span></p>
   </div>
 
   <div class="wrapper" id="updater">

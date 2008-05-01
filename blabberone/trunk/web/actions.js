@@ -6,6 +6,7 @@ var myFollowers;
 var whoImFollowing;
 var followingViewed;
 var tweets;
+var sendBanned = false;
 
 // The 3 sets of tweets that we can display
 var EVERYONE = "everyone";
@@ -15,6 +16,7 @@ var FOLLOWERS = "followers";
 // Functions called from the HTML
 function init() {
     dwr.engine.setActiveReverseAjax(true);
+    dwr.engine.setErrorHandler(customErrorHandler);
     existingChanged();
 
     dwr.engine.beginBatch();
@@ -35,15 +37,25 @@ function befriendMe() {
 }
 
 function updateStatus() {
+    if (sendBanned) {
+        return;
+    }
+
     var status = dwr.util.getValue("info_input");
     dwr.util.setValue("info_input", "");
+
+    if (status == null) return;
+    status = status.replace(/^\s+|\s+$/, '');;
+    if (status == "") return;
 
     dwr.util.setValue("me.status.message", "Sending ...");
     var button = dwr.util.byId("info_send");
     button.disabled = true;
     dwr.util.setValue(button, "Sending ...");
 
+    sendBanned = true;
     Network.updateStatus(status, function() {
+        sendBanned = false;
         dwr.util.setValue("me.status.message", status);
         var button = dwr.util.byId("info_send");
         button.disabled = false;
@@ -328,6 +340,18 @@ function getATagForUser(user) {
 function authFail(message) {
     checkAuthentication(setAuthentication);
     alert(message);
+}
+
+function customErrorHandler(message, ex) {
+    if (message == null || message == "") displayError("A server error has occurred.");
+    // Ignore NS_ERROR_NOT_AVAILABLE if Mozilla is being narky
+    else if (message.indexOf("0x80040111") != -1) dwr.engine._debug(message);
+    else displayError(message);
+}
+
+function displayError(message) {
+    dwr.util.setValue("error_message", message);
+    dwr.util.byId("error").style.display = "block";
 }
 
 /*
