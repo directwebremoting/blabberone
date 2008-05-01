@@ -14,8 +14,6 @@ import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.directwebremoting.Browser;
 import org.directwebremoting.ScriptSession;
 import org.directwebremoting.WebContext;
@@ -39,7 +37,7 @@ public class Network
         User currentUser = getCurrentUser();
         if (currentUser == null)
         {
-            log.warn("No current user");
+            ScriptProxy.addFunctionCall("authFail", "No session found. Are cookies enabled?");
             return;
         }
 
@@ -84,12 +82,24 @@ public class Network
     public void updateStatus(String message)
     {
         User currentUser = getCurrentUser();
+        if (currentUser == null)
+        {
+            ScriptProxy.addFunctionCall("authFail", "No session found. Are cookies enabled?");
+            return;
+        }
+
         createTweet(currentUser, message);
     }
 
     public void follow(String toFollow)
     {
         User me = getCurrentUser();
+        if (me == null)
+        {
+            ScriptProxy.addFunctionCall("authFail", "No session found. Are cookies enabled?");
+            return;
+        }
+
         User interest = users.get(toFollow);
         follow(me, interest);
     }
@@ -97,6 +107,12 @@ public class Network
     public void unfollow(String toFollow)
     {
         User me = getCurrentUser();
+        if (me == null)
+        {
+            ScriptProxy.addFunctionCall("authFail", "No session found. Are cookies enabled?");
+            return;
+        }
+
         User interest = users.get(toFollow);
         unfollow(me, interest);
     }
@@ -286,5 +302,4 @@ public class Network
     private Map<User, List<Tweet>> userTweets = new HashMap<User, List<Tweet>>();
     private List<Tweet> allTweets = new LimitedSizeList<Tweet>(20);
     private User system = createUserInternal("System", "5y5t3m");
-    private static final Log log = LogFactory.getLog(Network.class);
 }
