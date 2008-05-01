@@ -25,8 +25,11 @@ ul.bullets li { margin-left: 1em; }
 #container { width:755px; margin:0 auto; padding:15px 0; text-align:left; position:relative; }
 
 #content { padding-top:11px; margin-top:6px; width: 555px; float:left; padding-bottom:15px; }
-#content .info { padding-top: 3px; text-align: center; }
-#content textarea { height: 2.5em; width: 500px; padding: 5px; font: 1.15em/1.1 'Lucida Grande', sans-serif; overflow: auto; }
+
+#info { padding-top: 3px; text-align: center; }
+#info textarea { height: 2.5em; width: 500px; padding: 5px; font: 1.15em/1.1 'Lucida Grande', sans-serif; overflow: auto; }
+#info_report { float:right; }
+
 #content .tab { padding: 0px; border-top: 1px solid #cecece; margin-top:-1px;}
 #content .tab p { text-indent: 1em; }
 
@@ -37,7 +40,7 @@ ul.bullets li { margin-left: 1em; }
 #content .doing .meta img { vertical-align:top; }
 .tweet_row:hover { background-color:#f7f7f7; color:#000; }
 
-#content .wrapper { background:#fff; padding:10px; border:1px solid #87bc44; -moz-border-radius:5px; -webkit-border-radius:5px; }
+#content .wrapper { background:#fff; padding:10px; margin-bottom:5px; border:1px solid #87bc44; -moz-border-radius:5px; -webkit-border-radius:5px; }
 #content ul { padding-left:0px; }
 
 #content h1 { color:#000; font-size: 1.5em; margin: 3px 0pt 4px; line-height: 1.9em; position: relative; padding: 0 10px; }
@@ -66,9 +69,11 @@ ul.bullets li { margin-left: 1em; }
 .tabMenu li { display: inline; margin-left: -5px;}
 .tabMenu li a { display: inline; padding: 3px 20px 1px 20px; background: #e6e6e6; text-decoration: none; color: #4c4c4c; border-top: 1px solid #cecece;border-right: 1px solid #cecece; border-left: 1px solid #cecece; }
 .tabMenu li a:hover { text-decoration: none; color: black; background: #999;}
-.tabMenu li.active a { background: #fff; color: #000; border-bottom: 1px solid #fff; }
+.tabMenu li.active a { background:#fff; color:#000; border-bottom:1px solid #fff; }
 
 .inputline { margin-bottom:10px; }
+
+#intro_close { font-size:80%; float:right; border:1px outset #999; background:#EEE; padding:1px 4px; }
 
 #tweet_template { display:none; }
 .message { padding:10px 0 10px 0; }
@@ -79,7 +84,6 @@ ul.bullets li { margin-left: 1em; }
 
 <div id="container">
 <img src="images/blabberone.png"/>
-<br/>
 
 <div id="side_base">
   <div id="side">
@@ -137,24 +141,27 @@ ul.bullets li { margin-left: 1em; }
 </div>
 
 <div id="content">
-  <div class="wrapper">
+  <div class="wrapper" id="intro">
     <p><strong>BlabberOne is only a demonstration.</strong>
     It's a bit like <a href="http://twitter.com/home">Twitter</a>/<a href="http://www.jaiku.com/">Jaiku</a>/etc,
     although clearly not affiliated with either. It's here for JavaOne,
     to be used in <a href="https://www28.cplan.com/cc191/session_details.jsp?isid=295661&ilocation_id=191-1&ilanguage=english">Alex/Joe's talk on Comet</a>,
-    and a <a href="https://www28.cplan.com/cc191/session_details.jsp?isid=295302&ilocation_id=191-1&ilanguage=english">Jeremiah/Joe's talk Web 2 Security</a>.
+    and <a href="https://www28.cplan.com/cc191/session_details.jsp?isid=295302&ilocation_id=191-1&ilanguage=english">Jeremiah/Joe's talk Web 2 Security</a>.
+    <span id="intro_close"><a href="#" onclick="dwr.util.byId('intro').style.display = 'none';">Close</a></span>
     Don't expect anything you enter here to have any significant lifetime.
-    You can see the real tweet action for Joe <a href="http://twitter.com/joewalker">here</a>.</p>
+    You can see the real tweet action for Joe <a href="http://twitter.com/joewalker">here</a>.
+    </p>
   </div>
-  <br/>
+
   <div class="wrapper" id="updater">
+    <span id="info_report"></span>
     <h1>Wassup?</h1>
-    <div class="info">
-      <textarea cols="40" id="status" rows="2" onkeyup="dwr.util.onReturn(event, updateStatus);"></textarea>
-      <input onclick="updateStatus();" value="Send Message" type="button"/>
+    <div id="info">
+      <textarea cols="40" id="info_input" rows="2" onkeyup="dwr.util.onReturn(event, updateStatus);"></textarea>
+      <input id="info_send" onclick="updateStatus();" value="Send Message" type="button"/>
     </div>
   </div>
-  <br/>
+
   <div class="wrapper">
     <h1>Messages</h1>
     <ul class="tabMenu">

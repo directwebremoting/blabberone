@@ -5,6 +5,7 @@ var me;
 var myFollowers;
 var whoImFollowing;
 var followingViewed;
+var tweets;
 
 // The 3 sets of tweets that we can display
 var EVERYONE = "everyone";
@@ -18,7 +19,7 @@ function init() {
 
     dwr.engine.beginBatch();
     checkAuthentication(setAuthentication);
-    displayUserInSidebar(null);
+    displayViewedUser(null);
     setModeInternal(EVERYONE);
     dwr.engine.endBatch();
 }
@@ -34,14 +35,27 @@ function befriendMe() {
 }
 
 function updateStatus() {
-    var status = dwr.util.getValue("status");
-    dwr.util.setValue("status", "");
+    var status = dwr.util.getValue("info_input");
+    dwr.util.setValue("info_input", "");
 
-    // There is an argument to say we should put this in the callback for the
-    // call to updateStatus ...
-    dwr.util.setValue("me.status.message", status, { highlightHandler:dwr.util.yellowFadeHighlightHandler });
+    dwr.util.setValue("me.status.message", "Sending ...");
+    var button = dwr.util.byId("info_send");
+    button.disabled = true;
+    dwr.util.setValue(button, "Sending ...");
 
-    Network.updateStatus(status, loadTweets);
+    Network.updateStatus(status, function() {
+        dwr.util.setValue("me.status.message", status);
+        var button = dwr.util.byId("info_send");
+        button.disabled = false;
+        dwr.util.setValue(button, "Send Message");
+
+        dwr.util.setValue("info_report", "Message sent ...");
+        setTimeout(function() {
+            dwr.util.setValue("info_report", "");
+        }, 2000);
+
+        //loadTweets();
+    });
 }
 
 function toggleFollow() {
@@ -62,7 +76,7 @@ function getLoadUserAction(user, mode) {
 function loadUser(user, mode) {
     Network.getUser(user, function(data) {
         dwr.engine.beginBatch();
-        displayUserInSidebar(data);
+        displayViewedUser(data);
         setModeInternal(mode);
         dwr.engine.endBatch();
     });
@@ -91,7 +105,7 @@ function login() {
             }
             else {
                 setAuthentication(data);
-                displayUserInSidebar(data);
+                displayViewedUser(data);
                 setModeInternal(FOLLOWERS);
             }
         });
@@ -112,7 +126,7 @@ function login() {
                 }
                 else {
                     setAuthentication(data);
-                    displayUserInSidebar(data);
+                    displayViewedUser(data);
                     setModeInternal(FOLLOWERS);
                 }
             });
@@ -123,31 +137,23 @@ function login() {
 }
 
 // Callback function
-function displayTweets(tweets) {
+function displayTweets(data) {
+    tweets = data;
+
     // Delete all the rows except for the "pattern" row
     dwr.util.removeAllRows("tweets", { filter:function(tr) {
         return (tr.id != "tweet_template");
     }});
 
     for (var i = tweets.length - 1; i >= 0; i--) {
-        displayTweet(tweets[i], i);
-    }
-}
-
-function displayTweet(tweet, i) {
-    var username = tweet.user.username;
-    dwr.util.cloneNode("tweet_template", { idSuffix:"_"+i });
-
-    dwr.util.setValue("tweet_message_" + i, tweet.message);
-    var age = Math.floor((new Date().getTime() - tweet.timestamp) / 60000);
-    dwr.util.setValue("tweet_time_" + i, age);
-
-    var home = dwr.util.byId("tweet_user_home_" + i);
-    if (mode == USER) {
-        home.style.display = "none";
-        dwr.util.byId("tweet_user_thumb_" + i).style.display = "none";
-    }
-    else {
+        var tweet = tweets[i];
+        var username = tweet.user.username;
+        dwr.util.cloneNode("tweet_template", { idSuffix:"_"+i });
+    
+        dwr.util.setValue("tweet_message_" + i, tweet.message);
+        var age = Math.floor((new Date().getTime() - tweet.timestamp) / 60000);
+        dwr.util.setValue("tweet_time_" + i, age);
+    
         var link = dwr.util.byId("tweet_user_link_" + i);
         link.href = "#";
         link.title = username;
@@ -160,6 +166,7 @@ function displayTweet(tweet, i) {
         image.alt = username;
         image.src = tweet.user.avatar;
 
+        var home = dwr.util.byId("tweet_user_home_" + i);
         home.href = "#";
         home.title = username;
         home.innerHTML = username;
@@ -168,6 +175,11 @@ function displayTweet(tweet, i) {
             return getLoadUserAction(u, USER);
         }();
     }
+}
+
+function displayTweet(tweet) {
+    tweets.push(tweet);
+    displayTweets(tweets);
 }
 
 // Utility functions
@@ -215,7 +227,7 @@ function loadTweets() {
     }
 }
 
-function displayUserInSidebar(user) {
+function displayViewedUser(user) {
     viewed = user;
     if (user == null) {
         setModeInternal(EVERYONE);
@@ -269,7 +281,7 @@ function displayUserInSidebar(user) {
         // Display them all
         dwr.util.removeAllOptions("followers");
         if (followers.length == 0) {
-            dwr.util.addOptions("followers", [ "No followers. Maybe if they were to say something intelligent, someone might follow them." ]);
+            dwr.util.addOptions("followers", [ "No followers." ]);
             return;
         }
         dwr.util.addOptions("followers", followers, function(user) {
@@ -313,6 +325,11 @@ function getATagForUser(user) {
            " title='" + user.username + "'>"
 }
 
+function authFail(message) {
+    checkAuthentication(setAuthentication);
+    alert(message);
+}
+
 /*
 function updateHash() {
     setTimeout(function() {
@@ -330,13 +347,13 @@ function init() {
     hash = window.location.hash;
     if (hash == "" || hash == null) {
         checkAuthentication(setAuthentication);
-        displayUserInSidebar(null);
+        displayViewedUser(null);
         setModeInternal(EVERYONE);
     }
     var dashpos = hash.indexOf("-");
     if (dashpos == -1) {
         checkAuthentication(setAuthentication);
-        displayUserInSidebar(null);
+        displayViewedUser(null);
         setModeInternal(hash.substring(1));
     }
     else {
@@ -344,7 +361,7 @@ function init() {
         var proposedUser = hash.substring(dashpos + 1);
         checkAuthentication(setAuthentication);
         setViewed(proposedUser, function(data) {
-            displayUserInSidebar(data);
+            displayViewedUser(data);
             if (proposedMode == "#user") {
                 setModeInternal(USER);
             }
