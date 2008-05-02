@@ -266,7 +266,7 @@ var auth = {
                 else {
                     auth.display(data);
                     user.display(data);
-                    mode.setInternal(mode.FOLLOWERS);
+                    mode.setInternal(mode.USER);
                 }
             });
         }
@@ -379,6 +379,7 @@ var tweet = {
         
             dwr.util.setValue("tweet_message_" + i, t.message, { escapeHtml:false });
             var age = Math.floor((new Date().getTime() - t.timestamp) / 60000);
+            age = Math.abs(age);
             dwr.util.setValue("tweet_time_" + i, age);
         
             var link = dwr.util.byId("tweet_user_link_" + i);
