@@ -57,6 +57,11 @@ public class RandomData
         return getFirstName() + " " + getSurname();
     }
 
+    public static String getColor()
+    {
+        return Integer.toHexString(random.nextInt(16)) + Integer.toHexString(random.nextInt(16)) + Integer.toHexString(random.nextInt(16));
+    }
+
     protected static final Random random = new Random();
 
     private static final String[] FIRSTNAMES =
