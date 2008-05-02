@@ -19,6 +19,7 @@ public class User
         this.username = username;
         this.password = password;
         this.avatar = "images/" + (Math.abs(username.hashCode()) % 75) + ".png";
+        this.background = RandomData.getColor();
     }
 
     /**
@@ -38,6 +39,10 @@ public class User
     private String avatar;
     // public void setAvator(String avatar) { this.avatar = avatar; }
     public String getAvatar() { return avatar; }
+
+    private String background;
+    public String getBackground() { return background; }
+    public void setBackground(String background) { this.background = background; }
 
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()

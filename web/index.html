@@ -13,17 +13,15 @@
 
 body { background: #9ae4e8; text-align: center; font: 0.75em/1.5 'Lucida Grande', sans-serif; color: #333; }
 
-* { margin: 0; padding: 0; }
-a { text-decoration: none; color: blue; }
+* { margin:0; padding:0; }
+a { text-decoration:none; color:blue; }
 a:hover { text-decoration: underline; }
-a img { border: 0; }
-
-ul { list-style: none; }
-ul.bullets { list-style-type: square; padding: 1em; }
-ul.bullets li { margin-left: 1em; }
+a img { border:0; }
+ul { list-style:none; }
+ul.bullets { list-style-type:square; padding:1em; }
+ul.bullets li { margin-left:1em; }
 
 #container { width:755px; margin:0 auto; padding:15px 0; text-align:left; position:relative; }
-
 #content { padding-top:11px; margin-top:6px; width: 555px; float:left; padding-bottom:15px; }
 
 #info { padding-top: 3px; text-align: center; }
@@ -47,11 +45,11 @@ ul.bullets li { margin-left: 1em; }
 #content h1 { color:#000; font-size: 1.5em; margin: 3px 0pt 4px; line-height: 1.9em; position: relative; padding: 0 10px; }
 
 #side_base { float:right; width:187px; margin-top:58px; line-height:1.2; }
-#side { padding:12px 10px; margin-top:0px; margin-bottom:10px; border:1px solid #87bc44; background:#DDFFCC; -moz-border-radius:5px; -webkit-border-radius:5px; }
+.side_block { padding:12px 10px; margin-top:0px; margin-bottom:10px; border:1px solid #87bc44; background:#DDFFCC; -moz-border-radius:5px; -webkit-border-radius:5px; }
 #side div.user_icon img { float: left; padding-right: 0.5em; }
-#side div.section { margin-bottom: 2em; clear: both; }
-#side div.section h1 { border-bottom: 1px solid #98D231; margin-bottom: 10px; font-weight: bold; color: #333; font-size: 1em; padding: 0 0 2px; }
-#side div.section h2 { font-weight: bold; color: #333; font-size: 1em; padding: 16px 0 2px; clear:both; }
+#side div.side_block { margin-bottom: 2em; clear: both; }
+#side div.side_block h1 { border-bottom: 1px solid #98D231; margin-bottom: 10px; font-weight: bold; color: #333; font-size: 1em; padding: 0 0 2px; }
+#side div.side_block h2 { font-weight: bold; color: #333; font-size: 1em; padding: 16px 0 2px; clear:both; }
 #side ul { margin: 0; }
 #side .viewuser { font-size:1.1em; padding:4px 0 6px 0; }
 
@@ -78,6 +76,15 @@ ul.bullets li { margin-left: 1em; }
 
 #tweet_template { display:none; }
 .message { padding:10px 0 10px 0; }
+
+#login { background:url(images/background-trans.png); position:absolute; left:0px; top:0px; width:100%; height:100%; text-align:center; z-index: 1000; }
+#login form { width:280px; height:160px; margin:150px auto; background-color:#eee; border:2px outset #000; padding:20px 40px; text-align:center; -moz-border-radius:5px; -webkit-border-radius:5px; }
+#login input { float:right; }
+
+#me_background { background:#FFF; border:1px solid #FFF; }
+#me_background:focus { border:1px inset #888; }
+#save_background { font-size:80%; border:1px outset; }
+
   </style>
 </head>
 
@@ -87,7 +94,7 @@ ul.bullets li { margin-left: 1em; }
 
 <div id="side_base">
   <div id="side">
-    <div id="aboutme">
+    <div id="aboutme" class="side_block">
       <div class="section">
         <h1>Logged on as</h1>
         <div class="user_icon">
@@ -96,45 +103,29 @@ ul.bullets li { margin-left: 1em; }
             <p class="viewuser" id="me.username"></p>
           </a>
         </div>
-        <p><input type="submit" value="Find some random friends" onclick="befriendMe();"/></p>
+        <p><input type="submit" value="Find random friends" onclick="befriendMe();"/></p>
         <h2>Status:</h2>
         <p><span id="me.status.message"></span></p>
+        <h2>Background:</h2>
+        <p>
+          #<input id="me_background" onfocus="backgroundFocus();" onkeyup="dwr.util.onReturn(event, backgroundSubmit);" size="6">
+          <input id="save_background" type="button" value="SAVE" style="display:none;" onclick="backgroundSubmit();"/>
+        </p>
       </div>
     </div>
-    <div id="login" class="section">
-      <form onsubmit="return login();">
-        <h1>Login</h1>
-        <div class="inputline">
-          <label for="existing">Do you have an account already? </label><input type="checkbox" id="existing" checked="true" onchange="existingChanged();"/>
-        </div>
-        <div class="inputline">
-          <label for="existing">Username: </label><input type="text" id="username"/>
-        </div>
-        <div class="inputline">
-          <label for="existing">Password: </label><input type="password" id="password"/>
-        </div>
-        <div class="inputline" id="password2line" style="display:none;">
-          <label for="existing">Password (check): </label><input type="password" id="password2"/>
-        </div>
-        <div class="inputline">
-          <input type="submit" value="Login" id="loginSubmit"/>
-        </div>
-      </form>
-    </div>
-    <div id="aboutviewed">
-      <div class="section">
-        <h1>Viewing</h1>
-        <div class="user_icon">
-          <img class="side_thumb" id="viewed.avatar" height="24" width="24"/>
-          <p class="viewuser" id="viewed.username"></p>
-        </div>
-        <p>
-          <input id="follow" type="button" onclick="toggleFollow();" value="Follow"/>
-        </p>
+
+    <div class="side_block">
+      <h1>Network</h1>
+      <div id="current_user_network" class="section">
+        <p><a href="#" onclick="user.load(null, mode.EVERYONE);">Show whole network</a></p>
         <h2>Followers of <span id="side.who1"></span>:</h2>
         <ul id="followers" class="badges"></ul>
         <h2>People <span id="side.who2"></span> follows:</h2>
         <ul id="following" class="badges"></ul>
+      </div>
+      <div id="everyone_network" class="section">
+        <h2>All Users:</h2>
+        <ul id="everyone" class="badges"></ul>
       </div>
     </div>
   </div>
@@ -170,11 +161,20 @@ ul.bullets li { margin-left: 1em; }
   </div>
 
   <div class="wrapper">
-    <h1>Messages</h1>
+    <div id="current_user_info">
+      <div class="user_icon">
+        <h1 class="viewuser">
+          <img class="side_thumb" id="viewed.avatar" width="48" height="48" align="absmiddle"/>
+          <span id="viewed.username"></span>
+        </h1>
+         <button id="follow" onclick="toggleFollow();"></button>
+      </div>
+    </div>
+
     <ul class="tabMenu">
-      <li id="tab_user"><a href="#" onclick="setMode(USER);">by <span id="tab.who2"></span></a></li>
-      <li id="tab_followers"><a href="#" onclick="setMode(FOLLOWERS);">for <span id="tab.who1"></span></a></li>
-      <li id="tab_everyone"><a href="#" onclick="setMode(EVERYONE);">all</a></li>
+      <li id="tab_user"><a href="#" onclick="mode.set(mode.USER);">by <span id="tab.who2"></span></a></li>
+      <li id="tab_followers"><a href="#" onclick="mode.set(mode.FOLLOWERS);">for <span id="tab.who1"></span></a></li>
+      <li id="tab_everyone"><a href="#" onclick="user.load(null, mode.EVERYONE);">All Messages</a></li>
     </ul>
     <div class="tab">
       <table class="doing" cellspacing="0">
@@ -182,7 +182,7 @@ ul.bullets li { margin-left: 1em; }
           <tr class="tweet_row" id="tweet_template">
             <td class="thumb" id="tweet_user_thumb">
               <a id="tweet_user_link">
-                <img id="tweet_user_img" width="48" height="48"/>
+                <img id="tweet_user_img"/>
               </a>
             </td>
             <td>
@@ -220,5 +220,33 @@ ul.bullets li { margin-left: 1em; }
 </div>
 
 </div>
+
+<div id="login" class="section">
+  <div>
+    <form onsubmit="return auth.login();">
+      <h1>Login</h1>
+      <div class="inputline">
+        <input type="checkbox" id="existing" checked="checked" onchange="auth.existingChanged();"/>
+        <label for="existing">Do you have an account already? </label>
+      </div>
+      <div class="inputline">
+        <input type="text" id="username"/>
+        <label for="username">Username: </label>
+      </div>
+      <div class="inputline">
+        <input type="password" id="password"/>
+        <label for="password">Password: </label>
+      </div>
+      <div class="inputline" id="password2line" style="display:none;">
+        <input type="password" id="password2"/>
+        <label for="password2">Password (check): </label>
+      </div>
+      <div class="inputline">
+        <input type="submit" value="Login" id="loginSubmit"/>
+      </div>
+    </form>
+  </div>
+</div>
+
 </body>
 </html>

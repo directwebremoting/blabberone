@@ -14,9 +14,11 @@ import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.directwebremoting.Browser;
 import org.directwebremoting.ScriptSession;
-import org.directwebremoting.WebContext;
+import org.directwebremoting.ScriptSessionFilter;
 import org.directwebremoting.WebContextFactory;
 import org.directwebremoting.ui.ScriptProxy;
 
@@ -37,7 +39,7 @@ public class Network
         User currentUser = getCurrentUser();
         if (currentUser == null)
         {
-            ScriptProxy.addFunctionCall("authFail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
             return;
         }
 
@@ -84,11 +86,40 @@ public class Network
         User currentUser = getCurrentUser();
         if (currentUser == null)
         {
-            ScriptProxy.addFunctionCall("authFail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
             return;
         }
 
         createTweet(currentUser, message);
+    }
+
+    public User setBackground(String color)
+    {
+        User currentUser = getCurrentUser();
+        if (currentUser == null)
+        {
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
+            return null;
+        }
+
+        if (color.length() != 3 && color.length() != 6)
+        {
+            ScriptProxy.addFunctionCall("error.display", "Invalid color. Value must be 3 or 6 hex-digits.");
+            return null;
+        }
+
+        for (int i = 0; i < color.length(); i++)
+        {
+            char ch = Character.toLowerCase(color.charAt(i));
+            if (!Character.isDigit(ch) && (ch < 'a' || ch > 'f'))
+            {
+                ScriptProxy.addFunctionCall("error.display", "Invalid color. Contains non-hex-digits.");
+                return null;
+            }
+        }
+
+        currentUser.setBackground(color);
+        return currentUser;
     }
 
     public void follow(String toFollow)
@@ -96,7 +127,7 @@ public class Network
         User me = getCurrentUser();
         if (me == null)
         {
-            ScriptProxy.addFunctionCall("authFail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
             return;
         }
 
@@ -109,7 +140,7 @@ public class Network
         User me = getCurrentUser();
         if (me == null)
         {
-            ScriptProxy.addFunctionCall("authFail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
             return;
         }
 
@@ -158,7 +189,9 @@ public class Network
         if (REVERSE_AJAX)
         {
             ScriptSession scriptSession = WebContextFactory.get().getScriptSession();
-            scriptSession.setAttribute("subscription", Subscription.user(user));
+            Subscription sub = Subscription.user(user);
+            scriptSession.setAttribute("subscription", sub);
+            log.debug("Putting " + scriptSession.getId() + " into " + sub);
         }
 
         return userTweets.get(user);
@@ -170,6 +203,7 @@ public class Network
         {
             ScriptSession scriptSession = WebContextFactory.get().getScriptSession();
             scriptSession.setAttribute("subscription", Subscription.ALL);
+            log.debug("Putting " + scriptSession.getId() + " into " + Subscription.ALL);
         }
         return allTweets;
     }
@@ -185,7 +219,9 @@ public class Network
         if (REVERSE_AJAX)
         {
             ScriptSession scriptSession = WebContextFactory.get().getScriptSession();
-            scriptSession.setAttribute("subscription", Subscription.follower(user));
+            Subscription sub = Subscription.follower(user);
+            scriptSession.setAttribute("subscription", sub);
+            log.debug("Putting " + scriptSession.getId() + " into " + sub);
         }
 
         List<Tweet> candidates = new ArrayList<Tweet>();
@@ -216,6 +252,11 @@ public class Network
         return users.get(username);
     }
 
+    public Collection<User> getAllUsers()
+    {
+        return users.values();
+    }
+
     public User login(String username, String password)
     {
         User user = users.get(username);
@@ -244,62 +285,66 @@ public class Network
         userTweets.get(currentUser).add(tweet);
         allTweets.add(tweet);
 
-        Collection<ScriptSession> interested = getInterestedScriptSessions(currentUser);
-
-        Browser.withSessions(interested, new Runnable()
+        ScriptSessionFilter filter = new InterestedScriptSessionFilter(currentUser);
+        Browser.withAllSessionsFiltered(filter, new Runnable()
         {
             public void run()
             {
-                ScriptProxy.addFunctionCall("displayTweet", tweet);
+                ScriptProxy.addFunctionCall("tweet.push", tweet);
             }
         });
     }
 
-    private Collection<ScriptSession> getInterestedScriptSessions(User currentUser)
+    private class InterestedScriptSessionFilter implements ScriptSessionFilter
     {
-        Collection<ScriptSession> interested = new HashSet<ScriptSession>();
-        WebContext webContext = WebContextFactory.get();
-        for (ScriptSession session : webContext.getAllScriptSessions())
+        private User currentUser;
+
+        public InterestedScriptSessionFilter(User currentUser)
+        {
+            this.currentUser = currentUser;
+        }
+
+        /* (non-Javadoc)
+         * @see org.directwebremoting.ScriptSessionFilter#match(org.directwebremoting.ScriptSession)
+         */
+        public boolean match(ScriptSession session)
         {
             Subscription sub = (Subscription) session.getAttribute("subscription");
             if (sub == null)
             {
-                continue;
+                return false;
             }
 
             Subscription.Mode mode = sub.getMode();
             switch (mode)
             {
             case All:
-                interested.add(session);
-                break;
+                return true;
 
             case User:
-                if (sub.getUser() == currentUser)
-                {
-                    interested.add(session);
-                }
-                break;
+                return sub.getUser().equals(currentUser);
 
             case Follower:
                 for (User test : whoUserIsFollowing.get(currentUser))
                 {
                     if (sub.getUser().equals(test))
                     {
-                        interested.add(session);
+                        return true;
                     }
                 }
                 break;
             }
+
+            return false;
         }
-        return interested;
     }
 
     private static final boolean REVERSE_AJAX = true;
     private Map<String, User> users = new HashMap<String, User>();
-    private Map<User, Set<User>> whoUserIsFollowing = new HashMap<User, Set<User>>();
+    protected Map<User, Set<User>> whoUserIsFollowing = new HashMap<User, Set<User>>();
     private Map<User, Set<User>> usersFollowers = new HashMap<User, Set<User>>();
     private Map<User, List<Tweet>> userTweets = new HashMap<User, List<Tweet>>();
     private List<Tweet> allTweets = new LimitedSizeList<Tweet>(20);
     private User system = createUserInternal("System", "5y5t3m");
+    private static final Log log = LogFactory.getLog(Network.class);
 }

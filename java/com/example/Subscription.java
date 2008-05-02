@@ -3,9 +3,6 @@
  */
 package com.example;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author joe
  *
@@ -16,6 +13,9 @@ public class Subscription
 
     public static Subscription user(User user)
     {
+        return new Subscription(Mode.User, user);
+
+        /*
         Subscription sub = subscriptions.get(user);
         if (sub == null)
         {
@@ -23,10 +23,14 @@ public class Subscription
             subscriptions.put(user, sub);
         }
         return sub;
+        */
     }
 
     public static Subscription follower(User user)
     {
+        return new Subscription(Mode.Follower, user);
+
+        /*
         Subscription sub = subscriptions.get(user);
         if (sub == null)
         {
@@ -34,6 +38,7 @@ public class Subscription
             subscriptions.put(user, sub);
         }
         return sub;
+        */
     }
 
     private Mode mode;
@@ -95,5 +100,21 @@ public class Subscription
         Follower,
     }
 
-    private static final Map<User, Subscription> subscriptions = new HashMap<User, Subscription>();
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString()
+    {
+        if (user == null)
+        {
+            return "SUB[" + mode + ",null]";
+        }
+        else
+        {
+            return "SUB[" + mode + "," + user.getUsername() + "]";
+        }
+    }
+
+    //private static final Map<User, Subscription> subscriptions = new HashMap<User, Subscription>();
 }
