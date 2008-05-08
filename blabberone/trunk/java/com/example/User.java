@@ -32,9 +32,9 @@ public class User
     public void setPassword(String password) { this.password = password; }
     public String getPassword() { return password; }
 
-    private Tweet status = new Tweet("No status update so far", this);
-    public Tweet getStatus() { return status; }
-    public void setStatus(Tweet status) { this.status = status; }
+    private String status = "No status update so far";
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     private String avatar;
     // public void setAvator(String avatar) { this.avatar = avatar; }

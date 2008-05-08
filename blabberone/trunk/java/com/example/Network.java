@@ -12,11 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import javax.servlet.http.HttpSession;
+
 import org.directwebremoting.Browser;
 import org.directwebremoting.ScriptSession;
 import org.directwebremoting.ScriptSessionFilter;
+import org.directwebremoting.WebContext;
 import org.directwebremoting.WebContextFactory;
 import org.directwebremoting.ui.ScriptProxy;
 
@@ -197,7 +198,6 @@ public class Network
             ScriptSession scriptSession = WebContextFactory.get().getScriptSession();
             Subscription sub = Subscription.user(user);
             scriptSession.setAttribute("subscription", sub);
-            log.debug("Putting " + scriptSession.getId() + " into " + sub);
         }
 
         return userTweets.get(user);
@@ -209,8 +209,8 @@ public class Network
         {
             ScriptSession scriptSession = WebContextFactory.get().getScriptSession();
             scriptSession.setAttribute("subscription", Subscription.ALL);
-            log.debug("Putting " + scriptSession.getId() + " into " + Subscription.ALL);
         }
+
         return allTweets;
     }
 
@@ -227,7 +227,6 @@ public class Network
             ScriptSession scriptSession = WebContextFactory.get().getScriptSession();
             Subscription sub = Subscription.follower(user);
             scriptSession.setAttribute("subscription", sub);
-            log.debug("Putting " + scriptSession.getId() + " into " + sub);
         }
 
         List<Tweet> candidates = new ArrayList<Tweet>();
@@ -275,8 +274,14 @@ public class Network
 
         if (allowed)
         {
-            ScriptSession session = WebContextFactory.get().getScriptSession();
+            WebContext webContext = WebContextFactory.get();
+            ScriptSession session = webContext.getScriptSession();
             session.setAttribute("user", user);
+
+            // JSON mode doesn't get script session, so we also store this through the session cookie
+            HttpSession httpSession = webContext.getSession(true);
+            httpSession.setAttribute("user", user);
+
             return user;
         }
         else
@@ -294,7 +299,7 @@ public class Network
     private void createTweet(User currentUser, String message)
     {
         final Tweet tweet = new Tweet(message, currentUser);
-        currentUser.setStatus(tweet);
+        currentUser.setStatus(message);
         userTweets.get(currentUser).add(tweet);
         allTweets.add(tweet);
 
@@ -354,23 +359,47 @@ public class Network
 
     public void removeAllTweets()
     {
-        allTweets.clear();
-        for (List<Tweet> set : userTweets.values())
+        if (isAdmin())
         {
-            set.clear();
+            allTweets.clear();
+            for (List<Tweet> set : userTweets.values())
+            {
+                set.clear();
+            }
         }
     }
 
-    public void createInitialNetwork()
+    public Collection<User> createInitialNetwork()
     {
-        User user1 = createUserInternal("user1", "");
-        User user2 = createUserInternal("user2", "");
-        User user3 = createUserInternal("user3", "");
-        User user4 = createUserInternal("user4", "");
+        if (isAdmin())
+        {
+            User user1 = createUserInternal("user1", "");
+            User user2 = createUserInternal("user2", "");
+            User user3 = createUserInternal("user3", "");
+            User user4 = createUserInternal("user4", "");
+    
+            follow(user4, user3);
+            follow(user3, user2);
+            follow(user2, user1);
+        }
 
-        follow(user4, user3);
-        follow(user3, user2);
-        follow(user2, user1);
+        return users.values();
+    }
+
+    private boolean isAdmin()
+    {
+        boolean isAdmin = false;
+        WebContext webContext = WebContextFactory.get();
+        if (webContext != null)
+        {
+            HttpSession httpSession = webContext.getSession(true);
+            User me = (User) httpSession.getAttribute("user");
+            if (me != null && me.getUsername().equals("joe"))
+            {
+                isAdmin = true;
+            }
+        }
+        return isAdmin;
     }
 
     private static final boolean REVERSE_AJAX = true;
@@ -379,5 +408,4 @@ public class Network
     private Map<User, Set<User>> usersFollowers = new HashMap<User, Set<User>>();
     private Map<User, List<Tweet>> userTweets = new HashMap<User, List<Tweet>>();
     private List<Tweet> allTweets = new LimitedSizeList<Tweet>(20);
-    private static final Log log = LogFactory.getLog(Network.class);
 }

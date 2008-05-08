@@ -38,7 +38,7 @@ function updateStatus() {
     status = status.replace(/^\s+|\s+$/, '');;
     if (status == "") return;
 
-    dwr.util.setValue("me.status.message", "Sending ...");
+    dwr.util.setValue("me.status", "Sending ...");
     var button = dwr.util.byId("info_send");
     button.disabled = true;
     dwr.util.setValue(button, "Sending ...");
@@ -46,7 +46,7 @@ function updateStatus() {
     sendBanned = true;
     Network.updateStatus(status, function() {
         sendBanned = false;
-        dwr.util.setValue("me.status.message", status);
+        dwr.util.setValue("me.status", status);
         var button = dwr.util.byId("info_send");
         button.disabled = false;
         dwr.util.setValue(button, "Send Message");
@@ -129,9 +129,7 @@ var user = {
             user.displayEveryone();
             return;
         }
-    
-        // bug? setValues dies with recursive data structures
-        displayUser.status.user = null;
+
         dwr.util.setValues(user.current, { prefix:'viewed' });
     
         dwr.util.setValue("tab.who1", user.current.username);
@@ -251,8 +249,7 @@ var auth = {
             dwr.util.byId("aboutme").style.display = "block";
             dwr.util.byId("updater").style.display = "block";
             dwr.util.byId("login").style.display = "none";
-        
-            auth.current.status.user = null;
+
             dwr.util.setValues(auth.current, { prefix:'me' });
             dwr.util.byId("me_user_link").onclick = user.getLoadAction(auth.current.username, mode.USER);
             dwr.util.setValue("me_background", auth.current.background);
@@ -276,6 +273,7 @@ var auth = {
                     auth.display(data);
                     user.display(data);
                     mode.setInternal(mode.USER);
+                    error.clear();
                 }
             });
         }
@@ -297,6 +295,7 @@ var auth = {
                         auth.display(data);
                         user.display(data);
                         mode.setInternal(mode.FOLLOWERS);
+                        error.clear();
                     }
                 });
             }
@@ -483,6 +482,11 @@ error = {
     display: function(message) {
         dwr.util.setValue("error_message", message);
         dwr.util.byId("error").style.display = "block";
+    },
+
+    clear: function() {
+        dwr.util.setValue("error_message", "");
+        dwr.util.byId("error").style.display = "none";
     }
 };
 
@@ -518,48 +522,3 @@ var cookies = {
       cookies.create(name,"",-1);
     }
 };
-
-/*
-function updateHash() {
-    setTimeout(function() {
-        if (user.current == null) {
-            window.location.hash = "#" + mode.current;
-        }
-        else {
-            window.location.hash = "#" + mode.current + "-" + user.current.username;
-        }
-    }, 200);
-}
-
-function init() {
-    // replace the stuff in the batch with
-    hash = window.location.hash;
-    if (hash == "" || hash == null) {
-        auth.check(auth.display);
-        user.display(null);
-        mode.setInternal(mode.EVERYONE);
-    }
-    var dashpos = hash.indexOf("-");
-    if (dashpos == -1) {
-        auth.check(auth.display);
-        user.display(null);
-        mode.setInternal(hash.substring(1));
-    }
-    else {
-        var proposedMode = hash.substring(0, dashpos);
-        var proposedUser = hash.substring(dashpos + 1);
-        auth.check(auth.display);
-        setViewed(proposedUser, function(data) {
-            user.display(data);
-            if (proposedMode == "#user") {
-                mode.setInternal(mode.USER);
-            }
-            else if (proposedMode == "#everyone") {
-                mode.setInternal(mode.EVERYONE);
-            }
-            else {
-                mode.setInternal(mode.FOLLOWERS);
-            }
-        });
-    }
-*/
