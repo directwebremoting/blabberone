@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpSession;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.directwebremoting.Browser;
@@ -29,9 +27,9 @@ import com.example.RandomData.Factory;
  */
 public class Network
 {
-    public Network()
+    public int getBuildNumber()
     {
-        createTweet(system, "System started");
+        return 9;
     }
 
     public void befriendMe()
@@ -39,7 +37,7 @@ public class Network
         User currentUser = getCurrentUser();
         if (currentUser == null)
         {
-            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Please log in.");
             return;
         }
 
@@ -48,22 +46,14 @@ public class Network
         for (int i = 0; i < 10; i++)
         {
             User popular = factory.create();
-            if (!currentUser.equals(popular) && !currentUser.equals(system))
-            {
-                follow(currentUser, popular);
-            }
+            follow(currentUser, popular);
         }
     }
 
     public User createUser(String username, String password)
     {
-        User user = createUserInternal(username, password);
-        if (user != null)
-        {
-            WebContextFactory.get().getSession(true).setAttribute("user", user);
-        }
-
-        return user;
+        createUserInternal(username, password);
+        return login(username, password);
     }
 
     private User createUserInternal(String username, String password)
@@ -71,6 +61,17 @@ public class Network
         if (users.containsKey(username))
         {
             return null;
+        }
+
+        for (int i = 0; i < username.length(); i++)
+        {
+            int cp = username.codePointAt(i);
+            char ch = username.charAt(i);
+
+            if (!Character.isLetter(cp) && !Character.isDigit(cp) && ch != '-' && ch != '_')
+            {
+                return null;
+            }
         }
 
         User user = new User(username, password);
@@ -86,7 +87,7 @@ public class Network
         User currentUser = getCurrentUser();
         if (currentUser == null)
         {
-            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Please log in.");
             return;
         }
 
@@ -98,7 +99,7 @@ public class Network
         User currentUser = getCurrentUser();
         if (currentUser == null)
         {
-            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Please log in.");
             return null;
         }
 
@@ -127,7 +128,7 @@ public class Network
         User me = getCurrentUser();
         if (me == null)
         {
-            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Please log in.");
             return;
         }
 
@@ -140,7 +141,7 @@ public class Network
         User me = getCurrentUser();
         if (me == null)
         {
-            ScriptProxy.addFunctionCall("auth.fail", "No session found. Are cookies enabled?");
+            ScriptProxy.addFunctionCall("auth.fail", "No session found. Please log in.");
             return;
         }
 
@@ -150,6 +151,11 @@ public class Network
 
     private void follow(User stalker, User popular)
     {
+        if (stalker.equals(popular))
+        {
+            return;
+        }
+
         Set<User> followers = usersFollowers.get(popular);
         followers.add(stalker);
 
@@ -239,7 +245,7 @@ public class Network
 
     public User getCurrentUser()
     {
-        HttpSession session = WebContextFactory.get().getSession(false);
+        ScriptSession session = WebContextFactory.get().getScriptSession();
         if (session == null)
         {
             return null;
@@ -269,13 +275,20 @@ public class Network
 
         if (allowed)
         {
-            WebContextFactory.get().getSession(true).setAttribute("user", user);
+            ScriptSession session = WebContextFactory.get().getScriptSession();
+            session.setAttribute("user", user);
             return user;
         }
         else
         {
             return null;
         }
+    }
+
+    public void logout()
+    {
+        ScriptSession session = WebContextFactory.get().getScriptSession();
+        session.setAttribute("user", null);
     }
 
     private void createTweet(User currentUser, String message)
@@ -339,12 +352,32 @@ public class Network
         }
     }
 
+    public void removeAllTweets()
+    {
+        allTweets.clear();
+        for (List<Tweet> set : userTweets.values())
+        {
+            set.clear();
+        }
+    }
+
+    public void createInitialNetwork()
+    {
+        User user1 = createUserInternal("user1", "");
+        User user2 = createUserInternal("user2", "");
+        User user3 = createUserInternal("user3", "");
+        User user4 = createUserInternal("user4", "");
+
+        follow(user4, user3);
+        follow(user3, user2);
+        follow(user2, user1);
+    }
+
     private static final boolean REVERSE_AJAX = true;
     private Map<String, User> users = new HashMap<String, User>();
     protected Map<User, Set<User>> whoUserIsFollowing = new HashMap<User, Set<User>>();
     private Map<User, Set<User>> usersFollowers = new HashMap<User, Set<User>>();
     private Map<User, List<Tweet>> userTweets = new HashMap<User, List<Tweet>>();
     private List<Tweet> allTweets = new LimitedSizeList<Tweet>(20);
-    private User system = createUserInternal("System", "5y5t3m");
     private static final Log log = LogFactory.getLog(Network.class);
 }

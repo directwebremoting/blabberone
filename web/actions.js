@@ -15,6 +15,11 @@ function init() {
     user.display(null);
     mode.setInternal(mode.EVERYONE);
     dwr.engine.endBatch();
+
+    if (cookies.enabled()) {
+        dwr.util.byId('browserCheck').style.display = "none";
+        dwr.util.byId('loginSubmit').disabled = false;
+    }
 }
 
 function befriendMe() {
@@ -78,6 +83,10 @@ function backgroundSubmit() {
         user.load(auth.current.username, mode.USER);
         //document.body.style.background = "#" + currentUser.background;
     });
+}
+
+function help() {
+    error.display("Help! help!");
 }
 
 /**
@@ -216,7 +225,7 @@ var auth = {
      */
     fail: function(message) {
         auth.check(auth.display);
-        alert(message);
+        error.display(message);
     },
 
     /**
@@ -281,7 +290,7 @@ var auth = {
             else {
                 Network.createUser(username, password, function(data) {
                     if (data == null) {
-                        alert("Failed to create user");
+                        alert("Failed to create user. Usernames must be letters, digits, _ or -, and must not exist already.");
                         return;
                     }
                     else {
@@ -294,6 +303,19 @@ var auth = {
         }
         dwr.engine.endBatch();
         return false;
+    },
+
+    /**
+     * Log the current user out
+     */
+    logout:function() {
+        Network.logout(function() {
+            dwr.engine.beginBatch();
+            auth.check(auth.display);
+            user.display(null);
+            mode.setInternal(mode.EVERYONE);
+            dwr.engine.endBatch();
+        });
     },
 
     /**
@@ -379,7 +401,8 @@ var tweet = {
         
             dwr.util.setValue("tweet_message_" + i, t.message, { escapeHtml:false });
             var age = Math.floor((new Date().getTime() - t.timestamp) / 60000);
-            age = Math.abs(age);
+            // Clock skew
+            if (age < 0) age == 0;
             dwr.util.setValue("tweet_time_" + i, age);
         
             var link = dwr.util.byId("tweet_user_link_" + i);
@@ -463,6 +486,38 @@ error = {
     }
 };
 
+var cookies = {
+    enabled:function() {
+      cookies.create("enabled", "true");
+      var enabled = cookies.read("enabled");
+      return enabled == "true";
+    },
+
+    create:function(name, value, days) {
+     if (days) {
+        var date = new Date();
+        date.setTime(date.getTime()+(days*24*60*60*1000));
+        var expires = "; expires="+date.toGMTString();
+      }
+      else var expires = "";
+      document.cookie = name+"="+value+expires+"; path=/";
+    },
+
+    read:function(name) {
+      var nameEQ = name + "=";
+      var ca = document.cookie.split(';');
+      for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+      }
+      return null;
+    },
+
+    erase:function(name) {
+      cookies.create(name,"",-1);
+    }
+};
 
 /*
 function updateHash() {
